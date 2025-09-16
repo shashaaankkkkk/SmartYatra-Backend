@@ -9,4 +9,4 @@ class User(models.Model):
     age=models.IntegerField(null=True)
 
     def __str__(self):
-        return self.email
+        return self.first_name
