@@ -1,0 +1,96 @@
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Environment & secrets
+.env
+local_settings.py
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Build / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Logs
+*.log
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*,cover
+.hypothesis/
+
+# Django
+db.sqlite3
+static_cdn/
+media/*
+
+# Flask
+instance/
+.webassets-cache
+
+# Scrapy
+.scrapy
+
+# Sphinx docs
+docs/_build/
+
+# PyBuilder
+target/
+
+# Jupyter
+.ipynb_checkpoints
+
+# Pyenv
+.python-version
+
+# Celery
+celerybeat-schedule
+
+# IDEs / Editors
+.vscode/
+.idea/
+.spyderproject
+.ropeproject
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Translations
+*.mo
+*.pot
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Migrations (optional, keep if you want DB schema tracked)
+*/migrations/__pycache__/
+*/migrations/*.py
+!*/migrations/__init__.py
