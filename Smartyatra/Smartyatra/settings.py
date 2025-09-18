@@ -11,7 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
-
+import os
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -29,6 +29,8 @@ ALLOWED_HOSTS = ["*"]
 
 AUTH_USER_MODEL = 'app.User'
 
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY","AIzaSyCGdU3ecPTzdHxM4d-V3ZrMxpRyZntuaKw")
+GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
 # Application definition
 
 INSTALLED_APPS = [
@@ -41,6 +43,7 @@ INSTALLED_APPS = [
     'rest_framework', 
     'app',
     'ticketing',
+    'chat',
 ]
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
