@@ -46,10 +46,11 @@ class Bus(models.Model):
 
 class Ticket(models.Model):
     passenger = models.ForeignKey(User, on_delete=models.CASCADE, related_name='tickets')
+    bus = models.ForeignKey('Bus', on_delete=models.CASCADE, related_name='tickets')  # 👈 new field
     route = models.ForeignKey(Route, on_delete=models.CASCADE, related_name='tickets')
     booked_at = models.DateTimeField(default=timezone.now)
     is_used = models.BooleanField(default=False)
     used_at = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
-        return f"Ticket {self.id} - {self.passenger} - {self.route.name}"
+        return f"Ticket {self.id} - {self.passenger} - {self.bus.number} ({self.route.name})"
