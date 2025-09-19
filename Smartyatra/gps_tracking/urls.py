@@ -1,7 +1,11 @@
-from django.urls import path
-from .views import UpdateBusLocationView, GetBusLocationView
+# tracking/urls.py
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from .views import TrackingViewSet
+
+router = DefaultRouter()
+router.register(r"tracking", TrackingViewSet, basename="tracking")
 
 urlpatterns = [
-    path("bus/<int:bus_id>/update-location/", UpdateBusLocationView.as_view(), name="update_bus_location"),
-    path("bus/<int:bus_id>/location/", GetBusLocationView.as_view(), name="get_bus_location"),
+    path("", include(router.urls)),
 ]

@@ -1,29 +1,23 @@
 from rest_framework import viewsets, status
-from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from django.db.models import Count
 from django.utils import timezone
 
-from .models import Stop, Route, Bus, Ticket
+from .models import Stop, Route, RouteStop, Bus, Ticket
 from .serializers import (
     StopSerializer, RouteSerializer, RouteCreateSerializer,
     BusSerializer, TicketSerializer, TicketListSerializer
 )
-from .permissions import IsAdmin, IsPassenger, IsConductor, IsAuthority
 
-
-# Admin: Stops
+# ---------------- Stop ViewSet ----------------
 class StopViewSet(viewsets.ModelViewSet):
     queryset = Stop.objects.all()
     serializer_class = StopSerializer
-    permission_classes = [IsAuthenticated, IsAdmin]
 
 
-# Admin: Routes
+# ---------------- Route ViewSet ----------------
 class RouteViewSet(viewsets.ModelViewSet):
-    queryset = Route.objects.prefetch_related('routestops__stop').all()
-    permission_classes = [IsAuthenticated, IsAdmin]
+    queryset = Route.objects.all()
 
     def get_serializer_class(self):
         if self.action in ['create', 'update', 'partial_update']:
@@ -31,77 +25,53 @@ class RouteViewSet(viewsets.ModelViewSet):
         return RouteSerializer
 
 
-# Admin: Buses
+# ---------------- Bus ViewSet ----------------
 class BusViewSet(viewsets.ModelViewSet):
-    queryset = Bus.objects.select_related('route').all()
+    queryset = Bus.objects.all()
     serializer_class = BusSerializer
-    permission_classes = [IsAuthenticated, IsAdmin]
 
 
-# Tickets
+# ---------------- Ticket ViewSet ----------------
 class TicketViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated]
+    queryset = Ticket.objects.all()
 
     def get_serializer_class(self):
         if self.action in ['list', 'retrieve']:
-            return TicketListSerializer   # show QR + route/bus
-        return TicketSerializer           # for creating tickets
-
-    def get_permissions(self):
-        if self.action in ['create', 'list', 'retrieve']:
-            permission_classes = [IsAuthenticated, IsPassenger]
-        elif self.action == 'validate_ticket':
-            permission_classes = [IsAuthenticated, IsConductor]
-        else:
-            permission_classes = [IsAuthenticated]
-        return [p() for p in permission_classes]
-
-    def get_queryset(self):
-        user = self.request.user
-        # passengers should only see their own tickets
-        if hasattr(user, "role") and user.role == 'customer':
-            return Ticket.objects.filter(passenger=user).select_related(
-                "route", "passenger"
-            ).order_by("-booked_at")
-        # conductors/authorities can see all tickets
-        return Ticket.objects.select_related("route", "passenger").order_by("-booked_at")
+            return TicketListSerializer
+        return TicketSerializer
 
     def perform_create(self, serializer):
         serializer.save(passenger=self.request.user)
 
-    @action(detail=True, methods=['post'], url_path='validate')
-    def validate_ticket(self, request, pk=None):
-        ticket = self.get_object()
+    # ---------------- Ticket Validation ----------------
+    @action(detail=False, methods=['post'])
+    def validate_ticket(self, request):
+        """
+        Validate ticket for a scanned bus.
+        POST payload: { "ticket_id": 1, "bus_id": 2 }
+        """
+        ticket_id = request.data.get('ticket_id')
+        bus_id = request.data.get('bus_id')
 
+        try:
+            ticket = Ticket.objects.get(id=ticket_id)
+            bus = Bus.objects.get(id=bus_id, is_active=True)
+        except Ticket.DoesNotExist:
+            return Response({"error": "Ticket not found"}, status=status.HTTP_404_NOT_FOUND)
+        except Bus.DoesNotExist:
+            return Response({"error": "Bus not found or inactive"}, status=status.HTTP_404_NOT_FOUND)
+
+        # Check if ticket belongs to the bus's route
+        if ticket.route != bus.route:
+            return Response({"error": "Ticket not valid for this bus"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Check if ticket is already used
         if ticket.is_used:
-            return Response(
-                {"detail": "Ticket already used"},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"error": "Ticket already used"}, status=status.HTTP_400_BAD_REQUEST)
 
+        # Mark ticket as used
         ticket.is_used = True
         ticket.used_at = timezone.now()
         ticket.save()
 
-        return Response({"detail": "Ticket validated"}, status=status.HTTP_200_OK)
-
-
-# Authority: analytics
-@api_view(['GET'])
-@permission_classes([IsAuthenticated, IsAuthority])
-def analytics_dashboard(request):
-    total_tickets = Ticket.objects.count()
-    tickets_used = Ticket.objects.filter(is_used=True).count()
-    tickets_by_route = (
-        Ticket.objects
-        .values('route__id','route__name')
-        .annotate(sold=Count('id'))
-        .order_by('-sold')
-    )
-    buses_active = Bus.objects.filter(is_active=True).count()
-    return Response({
-        "total_tickets": total_tickets,
-        "tickets_used": tickets_used,
-        "buses_active": buses_active,
-        "tickets_by_route": list(tickets_by_route),
-    })
+        return Response({"success": "Ticket validated successfully"})
