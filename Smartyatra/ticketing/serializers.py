@@ -1,6 +1,9 @@
 from rest_framework import serializers
 from .models import Stop, Route, RouteStop, Bus, Ticket
 from django.db import transaction
+import qrcode , base64
+from io import BytesIO
+from .serializers import RouteSerializer
 
 class StopSerializer(serializers.ModelSerializer):
     class Meta:
@@ -69,6 +72,22 @@ class TicketSerializer(serializers.ModelSerializer):
 
 class TicketListSerializer(serializers.ModelSerializer):
     route = RouteSerializer(read_only=True)
+    qr_code = serializers.SerializerMethodField()
+
     class Meta:
         model = Ticket
         fields = ['id', 'route', 'booked_at', 'is_used', 'used_at']
+
+    def get_qr_code(self, obj):
+        # Encode ticket details or just ticket ID
+        data = f"TicketID:{obj.id}|Route:{obj.route.id}|BookedAt:{obj.booked_at}"
+
+        # Generate QR code
+        qr = qrcode.make(data)
+        buffer = BytesIO()
+        qr.save(buffer, format="PNG")
+        buffer.seek(0)
+
+        # Convert to Base64 string
+        img_str = base64.b64encode(buffer.getvalue()).decode("utf-8")
+        return f"data:image/png;base64,{img_str}"
