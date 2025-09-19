@@ -6,14 +6,13 @@ from io import BytesIO
 from .models import Stop, Route, RouteStop, Bus, Ticket
 
 
-# ---------------- Stops ----------------
+
 class StopSerializer(serializers.ModelSerializer):
     class Meta:
         model = Stop
         fields = ['id', 'name', 'code']
 
 
-# ---------------- RouteStops ----------------
 class RouteStopSerializer(serializers.ModelSerializer):
     stop = StopSerializer()
 
@@ -22,7 +21,6 @@ class RouteStopSerializer(serializers.ModelSerializer):
         fields = ['id', 'stop', 'order']
 
 
-# ---------------- Bus Serializer ----------------
 class BusSerializer(serializers.ModelSerializer):
     available_seats = serializers.SerializerMethodField()
 
@@ -34,7 +32,6 @@ class BusSerializer(serializers.ModelSerializer):
         return obj.capacity - obj.tickets.count()
 
 
-# ---------------- Route Serializer ----------------
 class RouteSerializer(serializers.ModelSerializer):
     stops = StopSerializer(many=True, read_only=True)
     routestops = RouteStopSerializer(many=True, read_only=True)
@@ -45,7 +42,7 @@ class RouteSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'description', 'stops', 'routestops', 'buses']
 
 
-# ---------------- Route Create Serializer ----------------
+
 class RouteCreateSerializer(serializers.ModelSerializer):
     # Accept stops_payload = [{"stop_id":1,"order":1},...]
     stops_payload = serializers.ListField(child=serializers.DictField(), write_only=True, required=False)
@@ -67,7 +64,6 @@ class RouteCreateSerializer(serializers.ModelSerializer):
         return route
 
 
-# ---------------- Ticket Serializer (for creating) ----------------
 class TicketSerializer(serializers.ModelSerializer):
     bus_id = serializers.PrimaryKeyRelatedField(
         source='bus', queryset=Bus.objects.filter(is_active=True), write_only=True
