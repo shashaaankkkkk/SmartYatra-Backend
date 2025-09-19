@@ -44,7 +44,8 @@ INSTALLED_APPS = [
     'app',
     'ticketing',
     'chat',
-     "corsheaders",
+    "corsheaders",
+    "gps_tracking"
 ]
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
