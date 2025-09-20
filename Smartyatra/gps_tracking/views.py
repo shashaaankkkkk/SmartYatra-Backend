@@ -1,42 +1,39 @@
-from rest_framework import generics, permissions, status
+# tracking/views.py
+from rest_framework import viewsets, status
 from rest_framework.response import Response
-from django.utils import timezone
-
-from .models import BusLocation, LocationHistory
-from .serializers import BusLocationSerializer, LocationUpdateSerializer
-from ticketing.models import Bus
-from ticketing.permissions import IsConductor, IsAuthority
+from rest_framework.decorators import action
+from .models import BusLocation
+from .serializers import BusLocationSerializer
 
 
-class UpdateBusLocationView(generics.GenericAPIView):
-    serializer_class = LocationUpdateSerializer
-    permission_classes = [permissions.IsAuthenticated, IsConductor]
+class TrackingViewSet(viewsets.ViewSet):
+    """
+    Handles updating and fetching bus locations.
+    """
 
-    def post(self, request, bus_id):
+    @action(detail=True, methods=["post"], url_path=r"(?P<lat>-?\d+(\.\d+)?)/(?P<lon>-?\d+(\.\d+)?)")
+    def update_location(self, request, pk=None, lat=None, lon=None):
+        """
+        Conductor updates location via URL params
+        Example: POST /tracking/1/55.8/37.6/
+        """
+        data = {
+            "bus": pk,
+            "latitude": lat,
+            "longitude": lon,
+        }
+        serializer = BusLocationSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"detail": "Location updated"}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=["get"], url_path="location")
+    def get_location(self, request, pk=None):
+        """Passenger fetches latest bus location"""
         try:
-            bus = Bus.objects.get(id=bus_id, assigned_conductor=request.user)
-        except Bus.DoesNotExist:
-            return Response({"detail": "Bus not found or not assigned to you."}, status=status.HTTP_404_NOT_FOUND)
-
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
-        lat = serializer.validated_data["latitude"]
-        lon = serializer.validated_data["longitude"]
-
-        location, _ = BusLocation.objects.update_or_create(
-            bus=bus,
-            defaults={"latitude": lat, "longitude": lon, "updated_at": timezone.now()}
-        )
-
-        LocationHistory.objects.create(bus=bus, latitude=lat, longitude=lon)
-
-        return Response(BusLocationSerializer(location).data, status=status.HTTP_200_OK)
-
-
-class GetBusLocationView(generics.RetrieveAPIView):
-    queryset = BusLocation.objects.select_related("bus")
-    serializer_class = BusLocationSerializer
-    permission_classes = [permissions.IsAuthenticated, IsAuthority]
-    lookup_field = "bus_id"
-    lookup_url_kwarg = "bus_id"
+            location = BusLocation.objects.filter(bus_id=pk).latest("timestamp")
+            serializer = BusLocationSerializer(location)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except BusLocation.DoesNotExist:
+            return Response({"detail": "No location found"}, status=status.HTTP_404_NOT_FOUND)
