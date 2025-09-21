@@ -1,5 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.conf import settings
+
 
 # ---------------- Stop ----------------
 class Stop(models.Model):
@@ -47,7 +49,11 @@ class Bus(models.Model):
 
 # ---------------- Ticket ----------------
 class Ticket(models.Model):
-    passenger = models.ForeignKey(User, related_name='tickets', on_delete=models.CASCADE)
+    passenger = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        related_name='tickets',
+        on_delete=models.CASCADE
+    )
     route = models.ForeignKey(Route, related_name='tickets', on_delete=models.CASCADE)
     booked_at = models.DateTimeField(auto_now_add=True)
     is_used = models.BooleanField(default=False)

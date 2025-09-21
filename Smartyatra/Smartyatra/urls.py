@@ -23,5 +23,6 @@ urlpatterns = [
     path('api/ticketing/', include('ticketing.urls')),
     path("api/", include("chat.urls")),
     path("tracking/", include("gps_tracking.urls")),
+    path("sos/", include("Sos_alert.urls")),
 
 ]
