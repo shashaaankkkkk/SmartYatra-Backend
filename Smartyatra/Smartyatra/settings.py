@@ -45,7 +45,8 @@ INSTALLED_APPS = [
     'ticketing',
     'chat',
     "corsheaders",
-    "gps_tracking"
+    "gps_tracking",
+    'Sos_alert'
 ]
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
