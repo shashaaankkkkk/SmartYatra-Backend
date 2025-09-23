@@ -1,15 +1,14 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import (
-    StopViewSet, RouteViewSet, BusViewSet, TicketViewSet )
+from .views import StopViewSet, RouteViewSet, BusViewSet, JourneyViewSet, TicketViewSet
 
 router = DefaultRouter()
-router.register('stops', StopViewSet, basename='stop')
-router.register('routes', RouteViewSet, basename='route')
-router.register('buses', BusViewSet, basename='bus')
-router.register('tickets', TicketViewSet, basename='ticket')
+router.register('stops', StopViewSet)
+router.register('routes', RouteViewSet)
+router.register('buses', BusViewSet)
+router.register('journeys', JourneyViewSet)
+router.register('tickets', TicketViewSet)
 
 urlpatterns = [
-    path('', include(router.urls)),
-   
+    path('api/', include(router.urls)),
 ]

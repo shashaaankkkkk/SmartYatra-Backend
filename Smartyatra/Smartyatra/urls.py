@@ -25,4 +25,5 @@ urlpatterns = [
     path("tracking/", include("gps_tracking.urls")),
     path("sos/", include("Sos_alert.urls")),
 
+
 ]

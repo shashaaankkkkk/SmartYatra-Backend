@@ -8,7 +8,7 @@ class BusLocation(models.Model):
     updated_at = models.DateTimeField(default=timezone.now)
 
     def __str__(self):
-        return f"{self.bus.number} - {self.latitude}, {self.longitude}"
+        return f"{self.bus} - {self.latitude}, {self.longitude}"
 
 
 class LocationHistory(models.Model):
@@ -18,4 +18,4 @@ class LocationHistory(models.Model):
     recorded_at = models.DateTimeField(default=timezone.now)
 
     def __str__(self):
-        return f"{self.bus.number} at {self.recorded_at}"
+        return f"{self.bus} at {self.recorded_at}"
